@@ -23,6 +23,7 @@ module.exports = {
     'comma-dangle': ["error", "always-multiline"],
     'no-else-return': 'off',
     'no-console': 'off',
+    'no-shadow': 'off',
     'import/prefer-default-export': 'off',
   }
 };
