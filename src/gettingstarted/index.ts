@@ -14,6 +14,9 @@ module MyModule {
     console.log(fib(3))
     console.log(fib(4))
     console.log(fib(5))
+    console.log(formatFactorial(7))
+    console.log(formatResult('absolute value', -42, abs))
+    console.log(formatResult('factorial', 7, factorial))
   }
 
   export const factorial = (n: number): number => {
@@ -33,6 +36,10 @@ module MyModule {
 
     return go(n, 0, 1)
   }
+
+  const formatFactorial = (n: number): string => `The factorial of ${n} is ${factorial(n)}`
+
+  const formatResult = (name: string, n: number, f: (x: number) => number) => `The ${name} of ${n} is ${f(n)}`
 }
 
 MyModule.main()
