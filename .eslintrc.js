@@ -25,6 +25,8 @@ module.exports = {
     'no-console': 'off',
     'no-shadow': 'off',
     'no-use-before-define': 'off',
+    'arrow-parens': 'off',
+    'implicit-arrow-linebreak': 'off',
     'import/prefer-default-export': 'off',
   }
 };

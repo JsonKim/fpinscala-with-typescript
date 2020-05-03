@@ -54,6 +54,18 @@ module MyModule {
 
     return go(0)
   }
+
+  export const partial1 = <A, B, C>(a: A, f: (a: A, b: B) => C): (b: B) => C =>
+    b => f(a, b)
+
+  export const curry = <A, B, C>(f: (a: A, b: B) => C): (a: A) => (b: B) => C =>
+    a => b => f(a, b)
+
+  export const uncurry = <A, B, C>(f: (a: A) => (b: B) => C): (a: A, b: B) => C =>
+    (a, b) => f(a)(b)
+
+  export const compose = <A, B, C>(f: (b: B) => C, g: (a: A) => B): (a: A) => C =>
+    a => f(g(a))
 }
 
 MyModule.main()
