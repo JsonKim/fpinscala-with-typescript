@@ -85,6 +85,25 @@ const setHead = <A>(x: A, xs: List<A>): List<A> => {
   }
 }
 
+const drop = <A>(l: List<A>, n: number): List<A> => {
+  if (n <= 0) return l
+  else if (l._tag === 'Nil') return nil
+  else return drop(l.tail, n - 1)
+}
+
+const dropWhile = <A>(l: List<A>, f: (a: A) => boolean): List<A> => {
+  switch (l._tag) {
+    case 'Nil':
+      return l
+    case 'Cons': {
+      if (f(l.head)) return dropWhile(l.tail, f)
+      else return l
+    }
+    default:
+      return absurd(l)
+  }
+}
+
 const main = () => {
   const ds = List(1, 2, 3, 4)
   console.log(sum(ds))
@@ -96,6 +115,9 @@ const main = () => {
     console.error(e)
   }
   console.log(getShow(showNumber).show(setHead(0, ds)))
+  console.log(getShow(showNumber).show(dropWhile(ds, (x: number) => x < 3)))
+  console.log(getShow(showNumber).show(drop(ds, 2)))
+  console.log(getShow(showNumber).show(drop(nil, 2)))
 }
 
 main()
