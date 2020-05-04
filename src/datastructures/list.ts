@@ -1,4 +1,5 @@
 import 'fp-ts/lib/HKT'
+import { Show, showNumber } from 'fp-ts/lib/Show'
 import { absurd } from 'fp-ts/lib/function'
 
 declare module 'fp-ts/lib/HKT' {
@@ -12,6 +13,21 @@ export const URI = 'List'
 export type URI = typeof URI
 
 type List<A> = Cons<A> | Nil
+
+function getShow<A>(S: Show<A>): Show<List<A>> {
+  return {
+    show: (ma) => {
+      switch (ma._tag) {
+        case 'Nil':
+          return 'Nil'
+        case 'Cons':
+          return `Cons(${S.show(ma.head)}, ${getShow(S).show(ma.tail)})`
+        default:
+          return absurd(ma)
+      }
+    },
+  }
+}
 
 const List = <A>(...as: A[]): List<A> =>
   as.reduceRight((acc: List<A>, a: A) => cons(a, acc), nil)
