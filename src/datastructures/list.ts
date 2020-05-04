@@ -69,10 +69,33 @@ const product = (ds: List<number>): number => {
   }
 }
 
+const tail = <A>(xs: List<A>): List<A> => {
+  if (xs._tag === 'Nil') {
+    throw new Error('tail of empty list')
+  } else {
+    return xs.tail
+  }
+}
+
+const setHead = <A>(x: A, xs: List<A>): List<A> => {
+  if (xs._tag === 'Nil') {
+    throw new Error('setHead on empty list')
+  } else {
+    return cons(x, xs.tail)
+  }
+}
+
 const main = () => {
   const ds = List(1, 2, 3, 4)
   console.log(sum(ds))
   console.log(product(ds))
+  console.log(getShow(showNumber).show(tail(ds)))
+  try {
+    console.log(tail(nil))
+  } catch (e) {
+    console.error(e)
+  }
+  console.log(getShow(showNumber).show(setHead(0, ds)))
 }
 
 main()
