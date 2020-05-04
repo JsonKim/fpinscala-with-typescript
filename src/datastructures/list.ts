@@ -14,7 +14,7 @@ export type URI = typeof URI
 type List<A> = Cons<A> | Nil
 
 const List = <A>(...as: A[]): List<A> =>
-  as.reduce((acc: List<A>, a: A) => cons(a, acc), nil)
+  as.reduceRight((acc: List<A>, a: A) => cons(a, acc), nil)
 
 interface Cons<A> {
   readonly _tag: 'Cons'
