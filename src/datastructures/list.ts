@@ -104,6 +104,11 @@ const dropWhile = <A>(l: List<A>, f: (a: A) => boolean): List<A> => {
   }
 }
 
+const append = <A>(a1: List<A>, a2: List<A>): List<A> => {
+  if (a1._tag === 'Nil') return a2
+  else return cons(a1.head, append(a1.tail, a2))
+}
+
 const main = () => {
   const ds = List(1, 2, 3, 4)
   console.log(sum(ds))
