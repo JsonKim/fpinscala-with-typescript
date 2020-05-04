@@ -109,6 +109,13 @@ const append = <A>(a1: List<A>, a2: List<A>): List<A> => {
   else return cons(a1.head, append(a1.tail, a2))
 }
 
+// 마지막 원소를 제외한 모든 원소를 복사해야 하기 때문에 비효율적이다.
+const init = <A>(l: List<A>): List<A> => {
+  if (l._tag === 'Nil') return nil
+  else if (l.tail._tag !== 'Nil' && l.tail.tail._tag === 'Nil') return cons(l.head, nil)
+  else return cons(l.head, init(l.tail))
+}
+
 const main = () => {
   const ds = List(1, 2, 3, 4)
   console.log(sum(ds))
@@ -123,6 +130,7 @@ const main = () => {
   console.log(getShow(showNumber).show(dropWhile(ds, (x: number) => x < 3)))
   console.log(getShow(showNumber).show(drop(ds, 2)))
   console.log(getShow(showNumber).show(drop(nil, 2)))
+  console.log(getShow(showNumber).show(init(ds)))
 }
 
 main()
