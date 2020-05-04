@@ -28,5 +28,7 @@ module.exports = {
     'arrow-parens': 'off',
     'implicit-arrow-linebreak': 'off',
     'import/prefer-default-export': 'off',
+    'max-classes-per-file': 'off',
+    'no-underscore-dangle': ["error", { "allow": ["_tag"] }],
   }
 };
