@@ -144,6 +144,22 @@ const sum2 = (ns: List<number>) =>
 const product2 = (ns: List<number>) =>
   foldRight(ns, 1.0)((x: number, y: number) => x * y)
 
+/* 연습문제 3.7
+ * product2는 foldRight가 0.0을 만났을때에 대한 처리가 따로 없고 꼬리 재귀가 아니기 때문에 끝까지 진행된다.
+ */
+
+/* 연습문제 3.8
+ * 동일한 목록이 생성된다. foldRight는 자료구조의 형태를 유지시킨다.
+ */
+
+const length = <A>(as: List<A>): number => foldRight(as, 0)((_, acc) => acc + 1)
+
+const foldLeft = <A, B>(as: List<A>, z: B) => (f: (b: B, a: A) => B): B =>
+  match(as)({
+    Nil: () => z,
+    Cons: (x, xs) => foldLeft(xs, f(z, x))(f),
+  })
+
 const main = () => {
   const ds = List(1, 2, 3, 4)
   console.log(sum(ds))
@@ -162,6 +178,7 @@ const main = () => {
   console.log(getShow(showNumber).show(init(ds)))
   console.log(sum2(ds))
   console.log(product2(ds))
+  console.log(length(ds))
 }
 
 main()
