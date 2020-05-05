@@ -32,5 +32,6 @@ module.exports = {
     'no-underscore-dangle': ["error", { "allow": ["_tag"] }],
     'no-unused-vars': 'off',
     'operator-linebreak': 'off',
+    'max-len': 'off',
   }
 };

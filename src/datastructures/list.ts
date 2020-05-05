@@ -160,6 +160,110 @@ const foldLeft = <A, B>(as: List<A>, z: B) => (f: (b: B, a: A) => B): B =>
     Cons: (x, xs) => foldLeft(xs, f(z, x))(f),
   })
 
+const sum3 = (ns: List<number>) =>
+  foldLeft(ns, 0)((x: number, y: number) => x + y)
+
+const product3 = (ns: List<number>) =>
+  foldLeft(ns, 1.0)((x: number, y: number) => x * y)
+
+const length2 = <A>(as: List<A>): number =>
+  foldLeft(as, 0)((acc, _) => acc + 1)
+
+const reverse = <A>(as: List<A>): List<A> =>
+  foldLeft(as, nil as List<A>)((t, h) => cons(h, t))
+
+// foldLeft(1 :: 2 :: 3 :: 4 :: Nil, Nil)((t, h) => h :: t)
+// foldLeft(2 :: 3 :: 4 :: Nil, 1 :: Nil)((t, h) => h :: t)
+// foldLeft(3 :: 4 :: Nil, 2 :: 1 :: Nil)((t, h) => h :: t)
+// foldLeft(4 :: Nil, 3 :: 2 :: 1 :: Nil)((t, h) => h :: t)
+// foldLeft(Nil, 4 :: 3 :: 2 :: 1 :: Nil)((t, h) => h :: t)
+// 4 :: 3 :: 2 :: 1 :: Nil
+
+// foldLeft(1 :: 2 :: 3 :: 4 :: Nil, 0)((acc, h) => acc + h)
+// foldLeft(2 :: 3 :: 4 :: Nil, (0 + 1))((acc, h) => acc + h)
+// foldLeft(3 :: 4 :: Nil, (0 + 1) + 2)((acc, h) => acc + h)
+// foldLeft(4 :: Nil, ((0 + 1) + 2) + 3)((acc, h) => acc + h)
+// foldLeft(Nil, (((0 + 1) + 2) + 3) + 4)((acc, h) => acc + h)
+// (((0 + 1) + 2) + 3) + 4)
+// 만약 h + acc를 선택했다면 최종 결과는 이렇게 합산되었을 것이다.
+// foldLeft(3 :: 4 :: Nil, 2 + (1 + 0))((acc, h) => h + acc)
+// 4 + (3 + (2 + (1 + 0)))
+
+// foldRight(1 :: 2 :: 3 :: 4 :: Nil, Nil)((h, t) => h :: t)
+// 1 :: foldRight(2 :: 3 :: 4 :: Nil, Nil)((h, t) => h :: t)
+// 1 :: 2 :: foldRight(3 :: 4 :: Nil, Nil)((h, t) => h :: t)
+// 1 :: 2 :: 3 :: foldRight(4 :: Nil, Nil)((h, t) => h :: t)
+// 1 :: 2 :: 3 :: 4 :: foldRight(Nil, Nil)((h, t) => h :: t)
+// 1 :: 2 :: 3 :: 4 :: Nil
+
+// foldRight(1 :: 2 :: 3 :: 4 :: Nil, 0)((h, acc) => h + acc)
+// 1 + foldRight(2 :: 3 :: 4 :: Nil, 0)((h, acc) => h + acc)
+// 1 + (2 + foldRight(3 :: 4 :: Nil, 0)((h, acc) => h + acc))
+// 1 + (2 + (3 + foldRight(4 :: Nil, 0)((h, acc) => h + acc)))
+// 1 + (2 + (3 + (4 + foldRight(Nil, 0)((h, acc) => h + acc))))
+// 1 + (2 + (3 + (4 + 0)))
+// 만약 acc + h를 선택했다면 최종 결과는 이렇게 합산되었을 것이다.
+// (foldRight(3 :: 4 :: Nil, 0)((h, acc) => acc + h) + 2) + 1
+// (((0 + 4) + 3) + 2) + 1
+
+// foldLeft와 foldRight의 연산 순서에 따른 차이도 눈여겨 보자
+
+const foldRight2 = <A, B>(as: List<A>, z: B) => (f: (a: A, b: B) => B): B =>
+  foldLeft(reverse(as), z)((b, a) => f(a, b))
+
+// reverse를 사용하여 목록을 뒤집는 대신, combinerDelayer를 사용하여 연산의 순서를 뒤집는다. 이것도 cps의 일종인가?
+const foldLeft2 = <A, B>(as: List<A>, outerIdent: B) => (combiner: (b: B, a: A) => B): B => {
+  type BtoB = (b: B) => B
+
+  const innerIdent: BtoB = (b: B) => b
+
+  const combinerDelayer: (a: A, bToB: BtoB) => BtoB =
+    (a: A, delayFunc: BtoB) => (b: B) => delayFunc(combiner(b, a))
+
+  const go: BtoB = foldRight(as, innerIdent)(combinerDelayer)
+
+  return go(outerIdent)
+}
+
+// foldLeft에 z를 cps로 주었다. 이제 z는 직접적인 값이 아닌 나중에 실행 가능한 값으로 대체된다.
+const foldRight3 = <A, B>(as: List<A>, z: B) => (f: (a: A, b: B) => B): B =>
+  foldLeft(as, (b: B) => b)((ret, a) => b => ret(f(a, b)))(z)
+
+// h :: forall a. a
+// b :: forall a. List a
+// t :: forall a. List a
+// ret :: forall a. List a -> List a
+
+// foldLeft(Nil, b => b)((ret, h) => t => h :: ret(t))
+// b => b
+
+// foldLeft(1 :: 2 :: Nil, (b => b))((ret, h) => t => ret(h :: t))
+// foldLeft(2 :: Nil, (b =>
+//   ((h1, t1) => h1 :: t1)(1, b)
+// ))((ret, h) => t => ret(h :: t))
+// foldLeft(Nil, (b =>
+//   ((h1, t1) => h1 :: ((h2, t2) => h2 :: t2)(2, t1))(1, b)
+// ))((ret, h) => t => ret(h :: t))
+// (b => ((h1, t1) => h1 :: ((h2, t2) => h2 :: t2)(2, t1))(1, b))(Nil)
+// ((h1, t1) => h1 :: ((h2, t2) => h2 :: t2)(2, t1))(1, Nil)
+// ((h1, t1) => h1 :: 2 :: t1)(1, Nil)
+// (1 :: 2 :: Nil)
+
+// foldLeft(2 :: Nil, b => {
+//   const ret = (h, t) => (h :: t)
+//   return ret(1, b)
+// })((ret, h) => t => ret(h :: t))
+// foldLeft(Nil, b => {
+//   const ret = (h, t) => (h :: t)
+//   return ret(1, ret(2, b))
+// })((ret, h) => t => ret(h :: t))
+
+const append2 = <A>(a1: List<A>, a2: List<A>): List<A> =>
+  foldRight(a1, a2)((a, acc) => cons(a, acc))
+
+const flat = <A>(ass: List<List<A>>): List<A> =>
+  foldRight(ass, nil as List<A>)((as, acc) => append(as, acc))
+
 const main = () => {
   const ds = List(1, 2, 3, 4)
   console.log(sum(ds))
@@ -179,6 +283,10 @@ const main = () => {
   console.log(sum2(ds))
   console.log(product2(ds))
   console.log(length(ds))
+  console.log(getShow(showNumber).show(reverse(ds)))
+  console.log(getShow(showNumber).show(foldRight(ds, nil as List<number>)((h, t) => cons(h, t))))
+  console.log(getShow(showNumber).show(foldRight2(ds, nil as List<number>)((h, t) => cons(h, t))))
+  console.log(getShow(showNumber).show(foldLeft2(ds, nil as List<number>)((t, h) => cons(h, t))))
 }
 
 main()
