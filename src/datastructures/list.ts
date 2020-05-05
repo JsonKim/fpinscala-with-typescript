@@ -116,6 +116,34 @@ const init = <A>(l: List<A>): List<A> => {
   else return cons(l.head, init(l.tail))
 }
 
+interface Match<A, B> {
+  Nil: () => B,
+  Cons: (h: A, t: List<A>) => B
+}
+
+const match = <A>(as: List<A>) => <B>(m: Match<A, B>): B => {
+  switch (as._tag) {
+    case 'Nil':
+      return m.Nil()
+    case 'Cons':
+      return m.Cons(as.head, as.tail)
+    default:
+      return absurd(as)
+  }
+}
+
+const foldRight = <A, B>(as: List<A>, z: B) => (f: (a: A, b: B) => B): B =>
+  match(as)({
+    Nil: () => z,
+    Cons: (x, xs) => f(x, foldRight(xs, z)(f)),
+  })
+
+const sum2 = (ns: List<number>) =>
+  foldRight(ns, 0)((x: number, y: number) => x + y)
+
+const product2 = (ns: List<number>) =>
+  foldRight(ns, 1.0)((x: number, y: number) => x * y)
+
 const main = () => {
   const ds = List(1, 2, 3, 4)
   console.log(sum(ds))
@@ -128,9 +156,12 @@ const main = () => {
   }
   console.log(getShow(showNumber).show(setHead(0, ds)))
   console.log(getShow(showNumber).show(dropWhile(ds, (x: number) => x < 3)))
+  console.log(getShow(showNumber).show(dropWhile(ds, x => x < 3)))
   console.log(getShow(showNumber).show(drop(ds, 2)))
   console.log(getShow(showNumber).show(drop(nil, 2)))
   console.log(getShow(showNumber).show(init(ds)))
+  console.log(sum2(ds))
+  console.log(product2(ds))
 }
 
 main()
