@@ -31,5 +31,6 @@ module.exports = {
     'max-classes-per-file': 'off',
     'no-underscore-dangle': ["error", { "allow": ["_tag"] }],
     'no-unused-vars': 'off',
+    'operator-linebreak': 'off',
   }
 };
