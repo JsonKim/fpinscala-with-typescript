@@ -1,5 +1,6 @@
 import 'fp-ts/lib/HKT'
 import { absurd } from 'fp-ts/lib/function'
+import * as R from 'ramda'
 
 declare module 'fp-ts/lib/HKT' {
   interface URItoKind<A> {
@@ -68,6 +69,15 @@ module Option {
 
   const filter = <A>(o: Option<A>, f: (a: A) => boolean): Option<A> =>
     flatMap(o)(x => (f(x) ? Some(x) : None))
+
+  const mean = (xs: Array<number>): Option<number> => {
+    if (xs.length === 0) return None
+    else return Some(R.sum(xs) / xs.length)
+  }
+
+  const variance = (xs: Array<number>): Option<number> =>
+    flatMap(mean(xs))((m) =>
+      mean(xs.map(x => (x - m) ** 2)))
 
   export const main = () => {
     console.log(orElse(Some(1), () => Some(0)))
