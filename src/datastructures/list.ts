@@ -1,6 +1,7 @@
 import 'fp-ts/lib/HKT'
 import { Show, showNumber } from 'fp-ts/lib/Show'
 import { absurd } from 'fp-ts/lib/function'
+import { lt } from 'fp-ts/lib/Ord'
 
 declare module 'fp-ts/lib/HKT' {
   interface URItoKind<A> {
@@ -218,6 +219,8 @@ const foldLeft2 = <A, B>(as: List<A>, outerIdent: B) => (combiner: (b: B, a: A) 
   const innerIdent: BtoB = (b: B) => b
 
   const combinerDelayer: (a: A, bToB: BtoB) => BtoB =
+
+
     (a: A, delayFunc: BtoB) => (b: B) => delayFunc(combiner(b, a))
 
   const go: BtoB = foldRight(as, innerIdent)(combinerDelayer)
@@ -264,6 +267,66 @@ const append2 = <A>(a1: List<A>, a2: List<A>): List<A> =>
 const flat = <A>(ass: List<List<A>>): List<A> =>
   foldRight(ass, nil as List<A>)((as, acc) => append(as, acc))
 
+const add1 = (xs: List<number>): List<number> =>
+  foldRight(xs, nil as List<number>)((x, xs) => cons(x + 1, xs))
+
+const toString = (xs: List<number>): List<string> =>
+  foldRight(xs, nil as List<string>)((x, ss) => cons(x.toString(), ss))
+
+const map = <A>(as: List<A>) => <B>(f: (a: A) => B): List<B> =>
+  foldRight(as, nil as List<B>)((a, bs) => cons(f(a), bs))
+
+const filter = <A>(as: List<A>) => (p: (a: A) => boolean): List<A> =>
+  foldRight(as, nil as List<A>)((a, as) => (p(a) ? cons(a, as) : as))
+
+const flatMap = <A>(as: List<A>) => <B>(f: (a: A) => List<B>): List<B> =>
+  flat(map(as)(f) as List<List<B>>)
+
+const flatMap2 = <A, B>(as: List<A>, f: (a: A) => List<B>): List<B> =>
+  foldRight(as, nil as List<B>)((a, bs) => append(f(a), bs))
+
+const filter2 = <A>(as: List<A>) => (p: (a: A) => boolean): List<A> =>
+  flatMap(as)(a => (p(a) ? List(a) : nil))
+
+const adder = (xs: List<number>, ys: List<number>): List<number> => {
+  if (xs._tag === 'Nil' || ys._tag === 'Nil') {
+    return nil
+  } else {
+    return cons(xs.head + ys.head, adder(xs.tail, ys.tail))
+  }
+}
+
+const zipWith = <A>(xs: List<A>, ys: List<A>) => <B>(f: (x: A, y: A) => B): List<B> => {
+  if (xs._tag === 'Nil' || ys._tag === 'Nil') {
+    return nil
+  } else {
+    return cons(f(xs.head, ys.head), zipWith(xs.tail, ys.tail)(f))
+  }
+}
+
+const startsWith = <A>(l: List<A>, prefix: List<A>): boolean => {
+  if (prefix._tag === 'Nil') {
+    return true
+  } else if (l._tag === 'Cons' && l.head === prefix.head) {
+    return startsWith(l.tail, prefix.tail)
+  } else {
+    return false
+  }
+}
+
+// 최악의 경우 sup * sub 만큼 순회해야 찾을 수 있다.
+const hasSubsequence = <A>(sup: List<A>, sub: List<A>): boolean => {
+  if (sub._tag === 'Nil') {
+    return true
+  } else if (sup._tag === 'Nil') {
+    return false
+  } else if (startsWith(sup, sub)) {
+    return true
+  }
+
+  return hasSubsequence(sup.tail, sub)
+}
+
 const main = () => {
   const ds = List(1, 2, 3, 4)
   console.log(sum(ds))
@@ -287,6 +350,12 @@ const main = () => {
   console.log(getShow(showNumber).show(foldRight(ds, nil as List<number>)((h, t) => cons(h, t))))
   console.log(getShow(showNumber).show(foldRight2(ds, nil as List<number>)((h, t) => cons(h, t))))
   console.log(getShow(showNumber).show(foldLeft2(ds, nil as List<number>)((t, h) => cons(h, t))))
+  console.log(hasSubsequence(List(1, 2, 3, 4, 5), List(1, 2, 3)))
+  console.log(hasSubsequence(List(1, 2, 3, 4, 5), List(2, 3)))
+  console.log(hasSubsequence(List(1, 2, 3, 4, 5), List(4, 5)))
+  console.log(hasSubsequence(List(1, 2, 3, 4, 5), List(1, 5)))
+  console.log(hasSubsequence(List(1, 2, 3, 4, 5), nil))
+  console.log(hasSubsequence(nil, List(1, 2, 3)))
 }
 
 main()
