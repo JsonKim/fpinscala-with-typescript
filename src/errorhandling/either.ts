@@ -1,5 +1,8 @@
 import 'fp-ts/lib/HKT'
 import { absurd } from 'fp-ts/lib/function'
+import {
+  List, foldRight, nil, cons,
+} from '../datastructures/list'
 
 declare module 'fp-ts/lib/HKT' {
   interface URItoKind2<E, A> {
@@ -72,4 +75,10 @@ module Either {
     flatMap(oa)(a =>
       map(ob)(b =>
         f(a, b)))
+
+  const traverse = <A>(as: List<A>) => <E, B>(f: (a: A) => Either<E, B>): Either<E, List<B>> =>
+    foldRight(as, Right(nil) as unknown as Either<E, List<B>>)((a, acc) => map2(f(a), acc)(cons))
+
+  const sequence = <E, A>(eas: List<Either<E, A>>): Either<E, List<A>> =>
+    traverse(eas)(x => x)
 }
