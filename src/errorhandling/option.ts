@@ -1,6 +1,9 @@
 import 'fp-ts/lib/HKT'
 import { absurd } from 'fp-ts/lib/function'
 import * as R from 'ramda'
+import {
+  List, foldRight, nil, cons,
+} from '../datastructures/list'
 
 declare module 'fp-ts/lib/HKT' {
   interface URItoKind<A> {
@@ -83,6 +86,9 @@ module Option {
     flatMap(oa)(a =>
       map(ob)(b =>
         f(a, b)))
+
+  const sequence = <A>(oas: List<Option<A>>): Option<List<A>> =>
+    foldRight(oas, Some(nil) as Option<List<A>>)((a, acc) => map2(a, acc)(cons))
 
   export const main = () => {
     console.log(orElse(Some(1), () => Some(0)))

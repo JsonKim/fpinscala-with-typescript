@@ -5,6 +5,7 @@ module.exports = {
   },
   extends: [
     'airbnb-base',
+    "plugin:import/typescript",
   ],
   globals: {
     Atomics: 'readonly',
@@ -33,5 +34,12 @@ module.exports = {
     'no-unused-vars': 'off',
     'operator-linebreak': 'off',
     'max-len': 'off',
+    "import/extensions": [
+      "error",
+      "ignorePackages",
+      {
+        "ts": "never",
+      }
+    ],
   }
 };

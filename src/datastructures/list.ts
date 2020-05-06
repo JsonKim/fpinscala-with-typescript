@@ -1,7 +1,6 @@
 import 'fp-ts/lib/HKT'
 import { Show, showNumber } from 'fp-ts/lib/Show'
 import { absurd } from 'fp-ts/lib/function'
-import { lt } from 'fp-ts/lib/Ord'
 
 declare module 'fp-ts/lib/HKT' {
   interface URItoKind<A> {
@@ -13,7 +12,7 @@ export const URI = 'List'
 
 export type URI = typeof URI
 
-type List<A> = Cons<A> | Nil
+export type List<A> = Cons<A> | Nil
 
 function getShow<A>(S: Show<A>): Show<List<A>> {
   return {
@@ -43,9 +42,9 @@ interface Nil {
   readonly _tag: 'Nil'
 }
 
-const nil: List<never> = { _tag: 'Nil' }
+export const nil: List<never> = { _tag: 'Nil' }
 
-const cons = <A>(h: A, t: List<A>): List<A> => ({ _tag: 'Cons', head: h, tail: t })
+export const cons = <A>(h: A, t: List<A>): List<A> => ({ _tag: 'Cons', head: h, tail: t })
 
 const sum = (ints: List<number>): number => {
   switch (ints._tag) {
@@ -133,7 +132,7 @@ const match = <A>(as: List<A>) => <B>(m: Match<A, B>): B => {
   }
 }
 
-const foldRight = <A, B>(as: List<A>, z: B) => (f: (a: A, b: B) => B): B =>
+export const foldRight = <A, B>(as: List<A>, z: B) => (f: (a: A, b: B) => B): B =>
   match(as)({
     Nil: () => z,
     Cons: (x, xs) => f(x, foldRight(xs, z)(f)),
