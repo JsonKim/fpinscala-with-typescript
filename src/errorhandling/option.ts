@@ -90,6 +90,12 @@ module Option {
   const sequence = <A>(oas: List<Option<A>>): Option<List<A>> =>
     foldRight(oas, Some(nil) as Option<List<A>>)((a, acc) => map2(a, acc)(cons))
 
+  const traverse = <A>(as: List<A>) => <B>(f: (a: A) => Option<B>): Option<List<B>> =>
+    foldRight(as, Some(nil) as Option<List<B>>)((a, acc) => map2(f(a), acc)(cons))
+
+  const sequence2 = <A>(oas: List<Option<A>>): Option<List<A>> =>
+    traverse(oas)(oa => oa)
+
   export const main = () => {
     console.log(orElse(Some(1), () => Some(0)))
     console.log(orElse(None, () => Some(0)))
