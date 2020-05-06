@@ -79,6 +79,11 @@ module Option {
     flatMap(mean(xs))((m) =>
       mean(xs.map(x => (x - m) ** 2)))
 
+  const map2 = <A, B>(oa: Option<A>, ob: Option<B>) => <C>(f: (a: A, b: B) => C): Option<C> =>
+    flatMap(oa)(a =>
+      map(ob)(b =>
+        f(a, b)))
+
   export const main = () => {
     console.log(orElse(Some(1), () => Some(0)))
     console.log(orElse(None, () => Some(0)))
