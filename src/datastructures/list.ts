@@ -14,7 +14,7 @@ export type URI = typeof URI
 
 export type List<A> = Cons<A> | Nil
 
-function getShow<A>(S: Show<A>): Show<List<A>> {
+export function getShow<A>(S: Show<A>): Show<List<A>> {
   return {
     show: (ma) => {
       switch (ma._tag) {
@@ -169,7 +169,7 @@ const product3 = (ns: List<number>) =>
 const length2 = <A>(as: List<A>): number =>
   foldLeft(as, 0)((acc, _) => acc + 1)
 
-const reverse = <A>(as: List<A>): List<A> =>
+export const reverse = <A>(as: List<A>): List<A> =>
   foldLeft(as, nil as List<A>)((t, h) => cons(h, t))
 
 // foldLeft(1 :: 2 :: 3 :: 4 :: Nil, Nil)((t, h) => h :: t)
@@ -357,4 +357,4 @@ const main = () => {
   console.log(hasSubsequence(nil, List(1, 2, 3)))
 }
 
-main()
+// main()
