@@ -106,7 +106,57 @@ module Stream {
       Empty: () => z(),
     })
 
+  const toList = <A>(as: Stream<A>): L.List<A> =>
+    foldRight(as)(() => L.nil as L.List<A>, (a, b) => L.cons(a, b()))
+
+  const toListTR = <A>(as: Stream<A>): L.List<A> => {
+    const go = (s: Stream<A>, acc: L.List<A>): L.List<A> =>
+      match(s)({
+        Cons: (h, t) => go(t(), L.cons(h(), acc)),
+        Empty: () => acc,
+      })
+
+    return L.reverse(go(as, L.nil))
+  }
+
+  const take = <A>(as: Stream<A>, n: number): Stream<A> => {
+    if (n <= 0) {
+      return empty
+    }
+
+    return match(as)({
+      Empty: () => empty,
+      Cons: (h, t) => cons(h, () => take(t(), n - 1)),
+    })
+  }
+
+  const drop = <A>(as: Stream<A>, n: number): Stream<A> => {
+    if (n <= 0) {
+      return as
+    }
+
+    return match(as)({
+      Empty: () => empty,
+      Cons: (_, t) => drop(t(), n - 1),
+    })
+  }
+
+  const takeWhile = <A>(as: Stream<A>, p: (a: A) => boolean): Stream<A> => {
+    if (as._tag === 'Cons' && p(as.h())) {
+      return cons(as.h, () => takeWhile(as.t(), p))
+    } else {
+      return empty
+    }
+  }
+
   export const main = () => {
+    const ds = stream(Seq(1, 2, 3, 4, 5))
+
+    console.log(getShow(showNumber).show(ds))
+    console.log(L.getShow(showNumber).show(toList(ds)))
+    console.log(L.getShow(showNumber).show(toListTR(ds)))
+    console.log(L.getShow(showNumber).show(toList(take(ds, 2))))
+    console.log(L.getShow(showNumber).show(toList(drop(ds, 2))))
   }
 }
 
