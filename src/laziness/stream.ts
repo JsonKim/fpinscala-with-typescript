@@ -101,7 +101,11 @@ const fibs = (): Stream<number> => {
   return go(0, 1)
 }
 
-const unfold = <A, S>(z: S, f: (s: S) => Option<[A, S]>): Stream<A> => {
+type Pair<A, B> = [A, B]
+
+const pair = <A, B>(a: A, b: B): Pair<A, B> => [a, b]
+
+const unfold = <A, S>(z: S, f: (s: S) => Option<Pair<A, S>>): Stream<A> => {
   const n = f(z)
   if (isNone(n)) {
     return empty
@@ -110,6 +114,17 @@ const unfold = <A, S>(z: S, f: (s: S) => Option<[A, S]>): Stream<A> => {
     return cons(() => a, () => unfold(s, f))
   }
 }
+
+const fibs2 = (): Stream<number> =>
+  unfold([0, 1], ([c, n]) => some([n, [n, c + n]]))
+
+const from2 = (n: number): Stream<number> =>
+  unfold(n, (s) => some([s, s + 1]))
+
+const constant2 = <A>(a: A): Stream<A> =>
+  unfold(a, (_) => some([a, a]))
+
+const ones2: Stream<number> = unfold(1, (_) => some([1, 1]))
 
 module Stream {
   interface Match<A, B> {
@@ -212,6 +227,52 @@ module Stream {
   const flatMap = <A>(as: Stream<A>) => <B>(f: (a: A) => Stream<B>): Stream<B> =>
     foldRight(as)((): Stream<B> => empty, (h, t) => append(f(h), t))
 
+  const map2 = <A>(as: Stream<A>) => <B>(f: (a: A) => B): Stream<B> =>
+    unfold(as, s => match(s)({
+      Cons: (h, t) => some([f(h()), t()]),
+      Empty: () => none,
+    }))
+
+  const take2 = <A>(as: Stream<A>, n: number): Stream<A> =>
+    unfold(pair(n, as), ([n, as]) =>
+      ((n <= 0)
+        ? none
+        : match(as)({
+          Cons: (h, t) => some(pair(h(), pair(n - 1, t()))),
+          Empty: () => none,
+        })))
+
+  const takeWhile3 = <A>(as: Stream<A>, p: (a: A) => boolean): Stream<A> =>
+    unfold(as, s =>
+      match(s)({
+        Cons: (h, t) => (p(h()) ? some(pair(h(), t())) : none),
+        Empty: () => none,
+      }))
+
+  const zipWith = <A>(s1: Stream<A>, s2: Stream<A>) => <B>(f: (x: Lazy<A>, y: Lazy<A>) => B): Stream<B> =>
+    unfold(pair(s1, s2), ([s1, s2]) => {
+      if (s1._tag === 'Empty' || s2._tag === 'Empty') {
+        return none
+      } else {
+        return some(pair(f(s1.h, s2.h), pair(s1.t(), s2.t())))
+      }
+    })
+
+  const zipAll = <A, B>(s1: Stream<A>, s2: Stream<B>): Stream<Pair<Option<A>, Option<B>>> =>
+    unfold(pair(s1, s2), ([s1, s2]) => {
+      if (s1._tag === 'Empty' && s2._tag === 'Empty') {
+        return none
+      } else if (s1._tag === 'Cons' && s2._tag === 'Empty') {
+        return some(pair(pair(some(s1.h()), none), pair(s1.t(), empty)))
+      } else if (s1._tag === 'Empty' && s2._tag === 'Cons') {
+        return some(pair(pair(none, some(s2.h())), pair(empty, s2.t())))
+      } else if (s1._tag === 'Cons' && s2._tag === 'Cons') {
+        return some(pair(pair(some(s1.h()), some(s2.h())), pair(s1.t(), s2.t())))
+      }
+
+      return none
+    })
+
   export const main = () => {
     const ds = stream(Seq(1, 2, 3, 4, 5))
 
@@ -226,6 +287,7 @@ module Stream {
     console.log(headOption(empty))
     console.log(L.getShow(showNumber).show(toList(take(from(5), 5))))
     console.log(L.getShow(showNumber).show(toList(take(fibs(), 5))))
+    console.log(L.getShow(showNumber).show(toList(take2(ones, 5))))
   }
 }
 
