@@ -1,6 +1,7 @@
 import 'fp-ts/lib/HKT'
 import { Show, showNumber } from 'fp-ts/lib/Show'
 import { absurd, Lazy } from 'fp-ts/lib/function'
+import { Option, none, some } from 'fp-ts/lib/Option'
 import * as L from '../datastructures/list'
 
 declare module 'fp-ts/lib/HKT' {
@@ -154,6 +155,38 @@ module Stream {
     }
   }
 
+  const forAll = <A>(as: Stream<A>, p: (a: A) => boolean): boolean => {
+    if (as._tag === 'Cons' && p(as.h())) {
+      return forAll(as.t(), p)
+    } else {
+      return false
+    }
+  }
+
+  const takeWhile2 = <A>(as: Stream<A>, p: (a: A) => boolean): Stream<A> =>
+    foldRight(as)((): Stream<A> => empty, (h, t) =>
+      (p(h)
+        ? cons(() => h, t)
+        : empty))
+
+  const headOption = <A>(as: Stream<A>): Option<A> =>
+    foldRight(as)((): Option<A> => none, (h, _) => some(h))
+
+  const map = <A>(as: Stream<A>) => <B>(f: (a: A) => B): Stream<B> =>
+    foldRight(as)((): Stream<B> => empty, (h, t) => cons(() => f(h), t))
+
+  const filter = <A>(as: Stream<A>) => (p: (a: A) => boolean): Stream<A> =>
+    foldRight(as)((): Stream<A> => empty, (h, t) =>
+      (p(h)
+        ? cons(() => h, t)
+        : t()))
+
+  const append = <A>(xs: Stream<A>, ys: () => Stream<A>): Stream<A> =>
+    foldRight(xs)(ys, (h, t) => cons(() => h, t))
+
+  const flatMap = <A>(as: Stream<A>) => <B>(f: (a: A) => Stream<B>): Stream<B> =>
+    foldRight(as)((): Stream<B> => empty, (h, t) => append(f(h), t))
+
   export const main = () => {
     const ds = stream(Seq(1, 2, 3, 4, 5))
 
@@ -163,6 +196,9 @@ module Stream {
     console.log(L.getShow(showNumber).show(toList(take(ds, 2))))
     console.log(L.getShow(showNumber).show(toList(drop(ds, 2))))
     console.log(L.getShow(showNumber).show(toList(take(ones, 5))))
+    console.log(forAll(ones, (a) => a !== 1))
+    console.log(headOption(ones))
+    console.log(headOption(empty))
   }
 }
 
