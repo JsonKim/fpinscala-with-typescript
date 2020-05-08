@@ -2,7 +2,7 @@ import 'fp-ts/lib/HKT'
 import { Show, showNumber } from 'fp-ts/lib/Show'
 import { absurd, Lazy } from 'fp-ts/lib/function'
 import {
-  Option, none, some, isNone,
+  Option, none, some, isNone, Some,
 } from 'fp-ts/lib/Option'
 import * as L from '../datastructures/list'
 
@@ -146,7 +146,7 @@ module Stream {
   const foldRight = <A>(as: Stream<A>) => <B>(z: () => B, f: (a: A, b: Lazy<B>) => B): B =>
     match(as)({
       Cons: (h, t) => f(h(), () => foldRight(t())(z, f)),
-      Empty: () => z(),
+      Empty: z,
     })
 
   const exists = <A>(as: Stream<A>) => (p: (a: A) => boolean): boolean =>
@@ -195,13 +195,8 @@ module Stream {
     }
   }
 
-  const forAll = <A>(as: Stream<A>, p: (a: A) => boolean): boolean => {
-    if (as._tag === 'Cons' && p(as.h())) {
-      return forAll(as.t(), p)
-    } else {
-      return false
-    }
-  }
+  const forAll = <A>(as: Stream<A>, p: (a: A) => boolean): boolean =>
+    foldRight(as)((): boolean => true, (h, t) => p(h) && t())
 
   const takeWhile2 = <A>(as: Stream<A>, p: (a: A) => boolean): Stream<A> =>
     foldRight(as)((): Stream<A> => empty, (h, t) =>
@@ -273,6 +268,28 @@ module Stream {
       return none
     })
 
+  const startsWith = <A>(s1: Stream<A>, s2: Stream<A>): boolean =>
+    forAll(takeWhile(zipAll(s1, s2), ([_, oa2]) => oa2._tag === 'Some'), ([h1, h2]) =>
+      (h1 as Some<A>).value === (h2 as Some<A>).value)
+
+  const tails = <A>(as: Stream<A>): Stream<Stream<A>> =>
+    unfold(as, s => match(s)({
+      Cons: (_, t) => some(pair(s, t())),
+      Empty: () => none,
+    }))
+
+  const hasSubsequence = <A>(s1: Stream<A>, s2: Stream<A>): boolean =>
+    exists(tails(s1))(s => startsWith(s, s2))
+
+  // unfold는 왼쪽에서부터 값을 생성하기 때문에 사용할 수 없다.
+  const scanRight = <A>(as: Stream<A>) => <B>(z: Lazy<B>, f: (a: A, b: Lazy<B>) => B): Stream<B> =>
+    foldRight(as)(() => pair(z, cons(z, () => empty)), (a, p0) => {
+      const p1 = memothunk(p0)()
+      const b2 = f(a, p1[0])
+      console.log(a, p1[0]())
+      return pair(() => b2, cons(() => b2, () => p1[1]))
+    })[1]
+
   export const main = () => {
     const ds = stream(Seq(1, 2, 3, 4, 5))
 
@@ -288,6 +305,9 @@ module Stream {
     console.log(L.getShow(showNumber).show(toList(take(from(5), 5))))
     console.log(L.getShow(showNumber).show(toList(take(fibs(), 5))))
     console.log(L.getShow(showNumber).show(toList(take2(ones, 5))))
+    console.log(startsWith(from(1), ds))
+    console.log(getShow(getShow(showNumber)).show(tails(ds)))
+    console.log(getShow(showNumber).show(scanRight(take(ds, 3))(() => 0, (a, b) => a + b())))
   }
 }
 
