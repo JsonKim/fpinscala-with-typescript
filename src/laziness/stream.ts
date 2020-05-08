@@ -83,6 +83,8 @@ export const cons = <A>(hd: Lazy<A>, tl: Lazy<Stream<A>>): Stream<A> => {
   }
 }
 
+const ones: Stream<number> = cons(() => 1, () => ones)
+
 module Stream {
   interface Match<A, B> {
     Empty: () => B,
@@ -105,6 +107,9 @@ module Stream {
       Cons: (h, t) => f(h(), () => foldRight(t())(z, f)),
       Empty: () => z(),
     })
+
+  const exists = <A>(as: Stream<A>) => (p: (a: A) => boolean): boolean =>
+    foldRight(as)((): boolean => false, (a, b) => p(a) || b())
 
   const toList = <A>(as: Stream<A>): L.List<A> =>
     foldRight(as)(() => L.nil as L.List<A>, (a, b) => L.cons(a, b()))
@@ -157,6 +162,7 @@ module Stream {
     console.log(L.getShow(showNumber).show(toListTR(ds)))
     console.log(L.getShow(showNumber).show(toList(take(ds, 2))))
     console.log(L.getShow(showNumber).show(toList(drop(ds, 2))))
+    console.log(L.getShow(showNumber).show(toList(take(ones, 5))))
   }
 }
 
