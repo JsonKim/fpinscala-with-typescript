@@ -1,7 +1,9 @@
 import 'fp-ts/lib/HKT'
 import { Show, showNumber } from 'fp-ts/lib/Show'
 import { absurd, Lazy } from 'fp-ts/lib/function'
-import { Option, none, some } from 'fp-ts/lib/Option'
+import {
+  Option, none, some, isNone,
+} from 'fp-ts/lib/Option'
 import * as L from '../datastructures/list'
 
 declare module 'fp-ts/lib/HKT' {
@@ -85,6 +87,29 @@ export const cons = <A>(hd: Lazy<A>, tl: Lazy<Stream<A>>): Stream<A> => {
 }
 
 const ones: Stream<number> = cons(() => 1, () => ones)
+
+const constant = <A>(a: A): Stream<A> =>
+  memothunk(() => cons(() => a, () => constant(a)))()
+
+const from = (n: number): Stream<number> =>
+  cons(() => n, () => from(n + 1))
+
+const fibs = (): Stream<number> => {
+  const go = (n1: number, n2: number): Stream<number> =>
+    cons(() => n1, () => go(n2, n1 + n2))
+
+  return go(0, 1)
+}
+
+const unfold = <A, S>(z: S, f: (s: S) => Option<[A, S]>): Stream<A> => {
+  const n = f(z)
+  if (isNone(n)) {
+    return empty
+  } else {
+    const [a, s] = n.value
+    return cons(() => a, () => unfold(s, f))
+  }
+}
 
 module Stream {
   interface Match<A, B> {
@@ -199,6 +224,8 @@ module Stream {
     console.log(forAll(ones, (a) => a !== 1))
     console.log(headOption(ones))
     console.log(headOption(empty))
+    console.log(L.getShow(showNumber).show(toList(take(from(5), 5))))
+    console.log(L.getShow(showNumber).show(toList(take(fibs(), 5))))
   }
 }
 
