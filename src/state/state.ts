@@ -85,6 +85,16 @@ namespace RNG {
     return go(count, rng, nil)
   }
 
+  const map2 = <A, B>(ra: Rand<A>, rb: Rand<B>) => <C>(f: (a: A, b: B) => C): Rand<C> =>
+    (rng: RNG) => {
+      const [a, rng2] = ra(rng)
+      const [b, rng3] = rb(rng2)
+      return [f(a, b), rng3]
+    }
+
+  const both = <A, B>(ra: Rand<A>, rb: Rand<B>): Rand<[A, B]> =>
+    map2(ra, rb)((a, b) => [a, b])
+
   export const main = () => {
     const rng = new SimpleRNG(42n)
 
