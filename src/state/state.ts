@@ -114,6 +114,14 @@ namespace RNG {
       else return nonNegativeLessThan(a)
     })
 
+  const mapViaFlatMap = <A>(s: Rand<A>) => <B>(f: (a: A) => B): Rand<B> =>
+    flatMap(s)(a => unit(f(a)))
+
+  const map2ViaFlatMap = <A, B>(ra: Rand<A>, rb: Rand<B>) => <C>(f: (a: A, b: B) => C): Rand<C> =>
+    flatMap(ra)(a =>
+      map(rb)(b =>
+        f(a, b)))
+
   export const main = () => {
     const rng = new SimpleRNG(42n)
 
