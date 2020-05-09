@@ -95,6 +95,10 @@ namespace RNG {
   const both = <A, B>(ra: Rand<A>, rb: Rand<B>): Rand<[A, B]> =>
     map2(ra, rb)((a, b) => [a, b])
 
+  const sequence = <A>(fs: List<Rand<A>>): Rand<List<A>> =>
+    foldRight(fs, unit(nil as List<A>))((a, acc) =>
+      map2(a, acc)(cons))
+
   export const main = () => {
     const rng = new SimpleRNG(42n)
 
