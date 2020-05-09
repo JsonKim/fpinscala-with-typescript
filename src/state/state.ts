@@ -138,4 +138,27 @@ namespace RNG {
   }
 }
 
-RNG.main()
+namespace State {
+  interface State<S, A> {
+    (s: S): [A, S]
+  }
+
+  const unit = <S, A>(a: A): State<S, A> => s => [a, s]
+
+  const flatMap = <S, A>(sa: State<S, A>) => <B>(f: (a: A) => State<S, B>): State<S, B> =>
+    s => {
+      const [a, s1] = sa(s)
+      return f(a)(s1)
+    }
+
+  const map = <S, A>(sa: State<S, A>) => <B>(f: (a: A) => B): State<S, B> =>
+    flatMap(sa)(a => unit(f(a)))
+
+  const map2 = <S, A, B>(sa: State<S, A>, sb: State<S, B>) => <C>(f: (a: A, b: B) => C): State<S, C> =>
+    flatMap(sa)(a =>
+      map(sb)(b =>
+        f(a, b)))
+
+  const sequence = <S, A>(fs: List<State<S, A>>): State<S, List<A>> =>
+    foldRight(fs, unit<S, List<A>>(nil as List<A>))((sa, l) => map2(sa, l)(cons))
+}
