@@ -161,4 +161,13 @@ namespace State {
 
   const sequence = <S, A>(fs: List<State<S, A>>): State<S, List<A>> =>
     foldRight(fs, unit<S, List<A>>(nil as List<A>))((sa, l) => map2(sa, l)(cons))
+
+  const get = <S>(): State<S, S> => s => [s, s]
+
+  const set = <S>(s: S): State<S, void> => _ => [undefined, s]
+
+  const modify = <S>(f: (s: S) => S): State<S, void> =>
+    flatMap(get<S>())(s =>
+      map(set(f(s)))(_ =>
+        undefined))
 }
