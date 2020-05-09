@@ -1,5 +1,5 @@
 import {
-  List, nil, cons, foldRight,
+  List, nil, cons, foldRight, map as Lmap,
 } from '../datastructures/list'
 
 const INT_MAX_VALUE = 2 ** 31 - 1
@@ -170,4 +170,51 @@ namespace State {
     flatMap(get<S>())(s =>
       map(set(f(s)))(_ =>
         undefined))
+
+  interface Coin { _tag: 'Coin' }
+  interface Turn { _tag: 'Turn' }
+  type Input = Coin | Turn
+
+  interface Machine {
+    readonly locked: boolean
+    readonly candies: number
+    readonly coins: number
+  }
+
+  const machine = (locked: boolean, candies: number, coins: number) => ({
+    locked, candies, coins,
+  })
+
+  type Result = [number, number]
+  const simulateMachine = (inputs: List<Input>): State<Machine, Result> => s => {
+    const go = (input: Input): State<Machine, Result> => s => {
+      if (s.candies === 0) return [[s.coins, s.candies], s]
+      if (s.locked && input._tag === 'Coin') return [[s.coins, s.candies], machine(false, s.candies, s.coins + 1)]
+      if (!s.locked && input._tag === 'Turn') return [[s.coins, s.candies], machine(false, s.candies - 1, s.coins)]
+      else return [[s.coins, s.candies], s]
+    }
+
+    return foldRight(inputs, unit<Machine, Result>([s.coins, s.candies]))(go)(s)
+  }
+
+  const simulateMachine2 = (inputs: List<Input>): State<Machine, Result> => s => {
+    // 입력에 의존해서 다음 상태를 만든다.
+    const update = (input: Input) => (s: Machine): Machine => {
+      if (s.candies === 0) return s
+      if (s.locked && input._tag === 'Coin') return machine(false, s.candies, s.coins + 1)
+      if (!s.locked && input._tag === 'Turn') return machine(false, s.candies - 1, s.coins)
+      else return s
+    }
+
+    // input들을 상태 변경목록으로 바꾼다.
+    const actions = Lmap(inputs)(i =>
+      modify<Machine>(update(i)))
+
+    // 상태 변경을 연속적으로 실행한다. 현재 상태에서 다음 상태로의 상태 전달은 sequence가 처리한다.
+    return flatMap(sequence(actions))(_ =>
+      // 최종 상태를 얻어온다. 상태는 값으로 전달된다.
+      map(get<Machine>())((s): Result =>
+        // 최종 결과를 산출한다.
+        [s.coins, s.candies]))(s)
+  }
 }

@@ -272,7 +272,7 @@ const add1 = (xs: List<number>): List<number> =>
 const toString = (xs: List<number>): List<string> =>
   foldRight(xs, nil as List<string>)((x, ss) => cons(x.toString(), ss))
 
-const map = <A>(as: List<A>) => <B>(f: (a: A) => B): List<B> =>
+export const map = <A>(as: List<A>) => <B>(f: (a: A) => B): List<B> =>
   foldRight(as, nil as List<B>)((a, bs) => cons(f(a), bs))
 
 const filter = <A>(as: List<A>) => (p: (a: A) => boolean): List<A> =>
