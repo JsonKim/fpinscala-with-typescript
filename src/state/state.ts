@@ -1,4 +1,6 @@
-import { List, nil, cons } from '../datastructures/list'
+import {
+  List, nil, cons, foldRight,
+} from '../datastructures/list'
 
 const INT_MAX_VALUE = 2 ** 31 - 1
 
@@ -98,6 +100,19 @@ namespace RNG {
   const sequence = <A>(fs: List<Rand<A>>): Rand<List<A>> =>
     foldRight(fs, unit(nil as List<A>))((a, acc) =>
       map2(a, acc)(cons))
+
+  const flatMap = <A>(f: Rand<A>) => <B>(g: (a: A) => Rand<B>): Rand<B> =>
+    rng => {
+      const [a, s] = f(rng)
+      return g(a)(s)
+    }
+
+  const nonNegativeLessThan = (n: Int): Rand<Int> =>
+    flatMap(nonNegativeInt)(a => {
+      const mod = a % n
+      if (a + (n - 1) - mod >= 0) return unit(mod)
+      else return nonNegativeLessThan(a)
+    })
 
   export const main = () => {
     const rng = new SimpleRNG(42n)
